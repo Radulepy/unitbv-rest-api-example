@@ -14,7 +14,7 @@ connection.connect(error => {
     }
     else
     {
-        console.log("Connectat cu succes");
+        console.log("Connectat cu succes mysql");
     }
 });
 

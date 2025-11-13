@@ -1,4 +1,4 @@
-const Todo = require("../models/todo.model");
+const Todo = require("../models/todo.mysql.model");
 
 exports.getTodo = (req, res) => {
     Todo.getAll((err, results) => {

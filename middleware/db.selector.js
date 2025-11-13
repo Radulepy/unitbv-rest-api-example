@@ -1,13 +1,17 @@
-const DB_SELECTOR = 'pg'; //pg sau mysql
+// Database selector "middleware": attaches the chosen Todo model to req
+// Set DB_SELECTOR to 'pg' or 'mysql'
+const DB_SELECTOR = 'pg'; // 'pg' sau 'mysql'
 
-let Todo;
+let TodoModel;
 if (DB_SELECTOR === 'pg') {
-    console.log("pg")
-    Todo = require('../config/pg'); // folosim postgres
-}
-else {
-    console.log("--mysql")
-    Todo = require('../config/db'); //folosim MySQL
+    // Use the Postgres model implementation
+    TodoModel = require('../models/todo.pg.model');
+} else {
+    // Use the MySQL model implementation
+    TodoModel = require('../models/todo.mysql.model');
 }
 
-module.exports = Todo;
+module.exports = function dbSelector(req, res, next) {
+    req.Todo = TodoModel;
+    next();
+};

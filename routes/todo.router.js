@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
-// const todoController = require("../controllers/todo.controller");
-const todoController = require("../controllers/todo.pg.controller");
+const dbSelector = require("../middleware/db.selector");
+const todoController = require("../controllers/todo.controller");
+// Attach DB-selection middleware to all todo routes
+router.use(dbSelector);
+
 
 router.get("/todos", todoController.getTodo);
 router.post("/todos", todoController.createTodo);

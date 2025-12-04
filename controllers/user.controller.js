@@ -1,26 +1,26 @@
 const jwt = require('jsonwebtoken');
-const bycrypt = require('bycrypt');
+const bcrypt = require('bcryptjs');
 const User = require("../models/user.mysql.model");
-const JWT_SECRET = process.env.JWT_SECRET || '677da87c88e35256d8021ab7abccdd13af7cf87acfc78760423573346f7c7ee8';
-const JWT_EXPIRATION = '1h';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
+const JWT_EXPIRATION = process.env.JWT_EXPIRES_IN || '1h';
 
 exports.register = (req, res) => {
-    const { username, pass } = req.body;
-    if (!username || !pass) {
-        return res.status(400).json({ error: "usn & pass req" })
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: "username and password required" });
     }
 
-    User.findbyUsername(username, (err, existing) => {
-        if (err) return res.status(500).json({ error: err });
-        if (existing) return res.status(409).json({ error: "username already exists" })
+    User.findByUsername(username, (err, existing) => {
+        if (err) return res.status(500).json({ error: err?.message || err });
+        if (existing) return res.status(409).json({ error: "username already exists" });
 
-        bycrypt.hash(pass, 10, (hashErr, hash) => {
-            if (hashErr) res.status(500).json({ error: "bycrypt err" })
+        bcrypt.hash(password, 10, (hashErr, hash) => {
+            if (hashErr) return res.status(500).json({ error: hashErr?.message || hashErr });
             User.create(username, hash, (createError, created) => {
                 if (createError)
-                    return res.status(500).json({ error: createError });
+                    return res.status(500).json({ error: createError?.message || createError });
 
-                return res.status(201).json({ id: created.create_id });
+                return res.status(201).json({ id: created.id, username });
             })
         })
 
@@ -28,22 +28,23 @@ exports.register = (req, res) => {
 }
 
 exports.login = (req, res) => {
-    const { username, pass } = req.body;
-    if (!username || !pass) {
-        return res.status(400).json({ error: "usn & pass req" })
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: "username and password required" })
     }
     
-    User.findbyUsername(username, (err, user)=>{
-        if(err) return res.status(500).json({error: err})
+    User.findByUsername(username, (err, user)=>{
+        if(err) return res.status(500).json({error: err?.message || err})
+        if(!user) return res.status(401).json({error: "invalid credentials"});
         
-        bycrypt.compare(pass, user.pass, (cryptError, match)=>{
-            if(cryptError) return res.status(500).json({error: cryptError});
+        bcrypt.compare(password, user.password_hash, (cryptError, match)=>{
+            if(cryptError) return res.status(500).json({error: cryptError?.message || cryptError});
             
-            if(!match) return res.status(401).json({error: "pass does not match"})
+            if(!match) return res.status(401).json({error: "invalid credentials"})
             const payload = {sub: user.id, username: user.username};
             
             const token = jwt.sign(payload, JWT_SECRET, {expiresIn: JWT_EXPIRATION});
-             res.json({token})
+            return res.json({token});
         })
     })
 }

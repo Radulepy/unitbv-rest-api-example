@@ -1,21 +1,33 @@
 const mysql = require("mysql2");
 
-const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "todo_db"
-})
+const disabled = process.env.DISABLE_DB === '1';
 
-connection.connect(error => {
-    if(error)
-    {
-        console.log("Erroare la conectare", error);
-    }
-    else
-    {
-        console.log("Connectat cu succes mysql");
-    }
-});
+let connection = null;
 
-module.exports = connection;
+function ensureConnection() {
+  if (disabled) return null;
+  if (connection) return connection;
+
+  connection = mysql.createConnection({
+    host: process.env.MYSQL_HOST || "localhost",
+    user: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || "",
+    database: process.env.MYSQL_DATABASE || "todo_db"
+  });
+
+  connection.connect(error => {
+    if (error) {
+      console.log("Erroare la conectare", error);
+    } else {
+      console.log("Connectat cu succes mysql");
+    }
+  });
+
+  return connection;
+}
+
+// Export an object to avoid “Cannot set properties of null”
+module.exports = {
+  ensureConnection,
+  connection: ensureConnection()
+};

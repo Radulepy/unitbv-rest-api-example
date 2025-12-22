@@ -19,7 +19,7 @@ function ensureConnection() {
     if (error) {
       console.log("Erroare la conectare", error);
     } else {
-      console.log("Connectat cu succes mysql");
+      console.log("Connectat cu succes");
     }
   });
 
